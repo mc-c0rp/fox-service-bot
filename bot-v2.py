@@ -1,3 +1,5 @@
+# API еще не готово
+
 import telebot
 import json
 
@@ -38,14 +40,26 @@ def send_welcome(message: telebot.types.Message):
 
 @bot.message_handler(commands=['login'])
 def send_login(message: telebot.types.Message):
+    global state
+
     send(
             message, 
             f"Сначала, мне необходимо войти в твой <strong>аккаунт</strong>.\nНужно это для того чтобы все твои действия в Атоме отображались от <strong>твоего имени</strong> в Атоме.\n(бот эти данные <strong>никак не обрабатывает</strong>, исходный код есть на github)\n\nОтправь мне почту и пароль одним сообщением через <strong>перенос строки</strong>.\n\nПример:\nshef.podnimite.zarplatu@gmail.com\nFastFox228!"
         )
+    state[message.from_user.id] = {"state": "login"}
 
 @bot.message_handler(func=lambda message: True)
 def echo_all(message: telebot.types.Message):
-    send(message, f"Вы написали: {message.text}")
+    global state
+
+    user_id = message.from_user.id
+    username = message.from_user.username
+    if user_id in state:
+        if state[user_id]['state'] == 'login':
+            mail, password = map(message.text.split('\n'))
+            bot.delete_message(message.chat.id, message.id)
+            send(message, f"Отправляю запрос в <strong>Атом</strong>...")
+            # запрос на сервер через api
 
 if __name__ == '__main__':
     bot_info = bot.get_me()
